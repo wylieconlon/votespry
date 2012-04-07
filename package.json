@@ -1,0 +1,10 @@
+{
+	"name": "VoteSpry",
+	"version": "0.0.1",
+	"dependencies": {
+		"express": "*",
+		"jade": "*",
+		"request": "*",
+		"twilio": "*"
+	}
+}
