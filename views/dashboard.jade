@@ -1,0 +1,9 @@
+h2 Polls for #{everyauth.user.email}
+
+a.btn(href='/new') Make a poll
+
+br
+
+ul#poll-list
+	each poll in polls
+		include _pollitem

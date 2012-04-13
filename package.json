@@ -2,9 +2,14 @@
 	"name": "VoteSpry",
 	"version": "0.0.1",
 	"dependencies": {
-		"express": "*",
-		"jade": "*",
-		"request": "*",
-		"twilio": "*"
+		  "express": "*"
+		, "jade": "*"
+		, "request": "*"
+		, "mongoose": "*"
+		, "mongoose-auth": "*"
+		, "stylus": "*"
+		, "node-uuid": "*"
+		, "bcrypt": "*"
+		, "everyauth": "*"
 	}
 }

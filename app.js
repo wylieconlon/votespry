@@ -1,9 +1,14 @@
 var settings = require('./settings'),
 	express = require('express'),
 	request = require('request'),
-	querystring = require('querystring'),
-	TwilioClient = require('twilio').Client,
-	Twiml = require('twilio').Twiml;
+	stylus  = require('stylus'),
+	uuid    = require('node-uuid'),
+	bcrypt  = require('bcrypt'),
+	mongoose = require('mongoose'),
+	Schema = mongoose.Schema,
+	mongooseAuth = require('mongoose-auth'),
+	everyauth = require('everyauth'),
+	querystring = require('querystring');
 
 var	TWILIO_SMS_PATH = settings.twilio.root + '/SMS/Messages.json';
 
@@ -11,14 +16,106 @@ var sms_to = '+13017411101';
 
 var app = module.exports = express.createServer();
 
+var dict = require('./nouns.js');
+console.log(dict.length);
+
+// Database configuration
+
+mongoose.connect(settings.dbHost+'/'+settings.dbName);
+
+var PollOptionsSchema = new Schema({
+	name: String,
+	votes: {
+		type: Number,
+		min: 0,
+		default: 0
+	}
+});
+PollOptionsSchema.pre('save', function(next) {
+	this.name = this.name.toLowerCase();
+	next();
+});
+var PollSchema = new Schema({
+	  title: String
+	, code:  String
+	, choices: [PollOptionsSchema]
+	, author: { type: Schema.ObjectId, ref: 'User' }
+});
+PollSchema.pre('save', function(next) {
+	this.code = this.code.toLowerCase();
+	next();
+});
+
+var VoteSchema = new Schema({
+	  author: { type: Schema.ObjectId, ref: 'User' }
+	, poll:   { type: Schema.ObjectId, ref: 'Poll' }
+});
+
+var UserSchema = new Schema({
+	  resetToken: String
+	, resetExpiration: Date
+	, emailConfirmationToken: { type: String, default: uuid.v1() }
+	, activated: { type: Boolean, default: false }
+	, lastUpdated: Date
+	, created: Date
+	, lastIPaddress: String
+	
+	//, polls: { type: [PollSchema], ref: 'Poll' }
+});
+UserSchema.plugin(mongooseAuth, {
+	everymodule: {
+		everyauth: {
+			User: function () {
+				return User;
+			}
+		}
+	}
+	
+	, password: {
+		  loginWith: 'email'
+		, everyauth: {
+			getLoginPath: '/login'
+			, postLoginPath: '/login'
+			, loginView: 'login.jade'
+			, getRegisterPath: '/register'
+			, postRegisterPath: '/register'
+			, registerView: 'register.jade'
+			, loginSuccessRedirect: '/'
+			, registerSuccessRedirect: '/'
+		}
+	}
+});
+UserSchema.pre('save', function(next) {
+	this.created = new Date();
+	this.lastUpdated = this.created;
+	next();
+});
+
+
+
+var PollOptions = mongoose.model('PollOptions', PollOptionsSchema);
+var Poll = mongoose.model('Poll', PollSchema);
+var User = mongoose.model('User', UserSchema);
+var Vote = mongoose.model('Vote', VoteSchema);
+
+
+// App setup
 app.configure(function() {
 	app.set('views', __dirname + '/views');
 	app.set('view engine', 'jade');
+	app.use(stylus.middleware({
+		force: true,
+		src: __dirname+'/views',
+		dest: __dirname+'/public'
+	}));
 	app.use(express.static(__dirname + '/public'));
+	app.use('/css', express.static(__dirname + '/public/css'));
 	app.use(express.bodyParser());
 	app.use(express.methodOverride());
 	app.use(express.cookieParser());
-	app.use(app.router);
+	app.use(express.session({ secret: "vote spry" }));
+	app.use(mongooseAuth.middleware());
+	//app.use(app.router);
 });
 
 app.configure('development', function() {
@@ -32,9 +129,171 @@ app.configure('production', function() {
 	app.use(express.errorHandler());
 });
 
+
 // Routes
 app.get('/', function(req, res) {
-	res.send("Hi");
+	if(req.loggedIn) {
+		Poll.find({ 'author': req.user._id }, function(err, doc) {
+					res.render('dashboard', { polls: doc });
+				});
+	} else {
+
+		
+		res.render('home');
+	}
+});
+
+// Creating poll
+app.get('/new', function(req, res) {
+	if(! req.loggedIn) {
+		res.redirect('/login?redirect_to=/new');
+	} else {
+		res.render('newpoll', { title: 'New Poll' });
+	}
+});
+app.post('/new', function(req, res) {
+	if(! req.loggedIn) {
+		res.redirect('/login');
+	}
+	
+	var newPoll = new Poll();
+	
+	newPoll.title = req.body.title;
+
+	// instantiate each choice individually
+	var choices = req.body.choices;
+	for(var i=0; i<choices.length; i++) {
+		newPoll.choices.push({ name: choices[i] });
+	}
+
+	newPoll.author = req.user._id;
+	
+	if(! req.body.code) {
+		function findUntakenCode() {
+			var rand = Math.floor(Math.random() * dict.length),
+			keyword = dict[rand];
+
+			console.log(keyword);
+			/*User.find({ "polls.code": keyword }, function(err, doc) {
+				console.log("Found " + doc.length + " matches");
+				
+				if(doc.length == 0) 
+			});*/
+			
+			return keyword;
+		}
+
+		newPoll.code = findUntakenCode();
+	} else {
+		newPoll.code = req.body.code;
+	}
+
+	console.log(newPoll);
+	
+	newPoll.save();
+
+	res.redirect('/polls');
+});
+
+app.get('/polls', function(req, res) {
+	if(! req.loggedIn) {
+		res.redirect('/login');
+	}
+	
+	var polls = Poll.find({ 'author': req.user._id }, function(err, doc) {
+					res.render('listpolls', { polls: doc });
+				});
+});
+
+app.get('/poll/:code', function(req, res) {
+	Poll.where('code', req.params.code)
+		.limit(1)
+		.run(function(err, doc) {
+			if(doc.length == 1) {
+				res.render('pollitem', {
+					poll: doc[0],
+					host: settings.host,
+					number: settings.twilio.fromFormatted
+				});
+			} else {
+				console.log("No code");
+
+				res.redirect('/polls');
+			}
+		});
+});
+
+app.get('/poll/:code/data.json', function(req, res) {
+	Poll.where('code', req.params.code)
+		.limit(1)
+		.run(function(err, doc) {
+			if(doc.length == 1) {
+				var poll = doc[0];
+				
+				if(poll) {
+					var data = {
+						code: req.params.code,
+						keys: [],
+						votes: []
+					};
+
+					for(var i=0; i<poll.choices.length; i++) {
+						data.keys[i] = poll.choices[i].name.toUpperCase();
+						data.votes[i] = poll.choices[i].votes;
+					}
+
+					res.json(data);
+				} else {
+					res.json({ error: "No poll with that ID", code: req.params.code });
+				}
+			} else {
+				res.json({ error: "No poll with that ID", code: req.params.code });
+			}
+		});	
+});
+
+app.get('/vote/:code/:choice', function(req, res) {
+	//if(! req.loggedIn) res.redirect('/login');
+
+	Poll.where('code', req.params.code)
+		.exists('choices.'+req.params.choice)
+		.limit(1)
+		.run(function(err, doc) {
+			if(doc.length == 1) {
+				var poll = doc[0];
+				
+				console.log(poll);
+
+				Vote.where('author', req.user._id)
+					.where('poll', poll._id)
+					.limit(1)
+					.run(function(err, doc) {
+						if(doc.length > 0) {
+							console.log("Invalid vote");
+							
+							res.json({ error: "You have already voted on this poll." });
+						} else {
+							var increment = { '$inc': {} };
+							increment['$inc']['choices.'+req.params.choice+'.votes'] = 1;
+
+							Poll.update({ 'code': req.params.code },
+										increment,
+										function(err, doc) {
+										});
+							
+							var vote = new Vote({
+								author: req.user._id,
+								poll: poll._id
+							});
+							vote.save();
+
+							res.json({ success: "Vote succeeded" });
+						}
+					});
+			} else {
+				res.json({ error: "No poll with that ID", code: req.params.code });
+			}
+		});	
 });
 
 app.get('/send', function(req, res) {
@@ -64,8 +323,45 @@ app.get('/send', function(req, res) {
 
 app.post('/SmsResponse', function(req, res) {
 	console.log(req.body);
-	res.sendfile('./smsresponse.xml');
+	
+	var body = req.body.Body;
+
+	var splitIndex = body.indexOf(' '),
+		code = body.substr(0, splitIndex).toLowerCase(),
+		content = body.substr(splitIndex+1, body.length).toLowerCase();
+
+	console.log(code, content);
+
+	Poll.where('code', code)
+		.where('choices.name', content)
+		.limit(1)
+		.run(function(err, doc) {
+			var poll = doc[0];
+			
+			var updateIndex = -1;
+			for(var i=0; i<poll.choices.length; i++) {
+				if(poll.choices[i].name == content) {
+					updateIndex = i;
+					break;
+				}
+			}
+
+			if(typeof updateIndex !== 'undefined') {
+				var increment = { '$inc': {} };
+					increment['$inc']['choices.'+updateIndex+'.votes'] = 1;
+				Poll.update({ 'code': code },
+							increment,
+							function(err, doc) {
+							});
+
+				res.sendfile('./smsSuccess.xml');
+			} else {
+				res.sendfile('./smsFailure.xml');
+			}
+		});
 });
+
+mongooseAuth.helpExpress(app);
 
 app.listen(settings.port);
 console.log("Server listening on port %d", settings.port);

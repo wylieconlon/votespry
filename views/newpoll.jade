@@ -1,0 +1,17 @@
+append head
+	script(src='/js/newpoll.js')
+
+h2 Create poll
+
+form(action='/new', method='post')
+	input(type='text', name='title', placeholder='Title')
+	#choices
+		input(type='text', name='choices[0]')
+		input(type='text', name='choices[1]')
+	a#addChoice(href='#') + Add option
+	div
+
+	input(type='text', name='code', placeholder='Use a custom voting code')
+	
+	div
+	input(type='submit', value='Create')
