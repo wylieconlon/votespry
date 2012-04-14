@@ -6,4 +6,8 @@ br
 
 ul#poll-list
 	each poll in polls
-		include _pollitem
+		li.poll-item
+			a(href='/poll/#{poll.code}')
+				h3
+					= poll.title
+					|  &rarr;	
