@@ -23,80 +23,12 @@ console.log(dict.length);
 
 mongoose.connect(settings.dbHost+'/'+settings.dbName);
 
-var PollOptionsSchema = new Schema({
-	name: String,
-	votes: {
-		type: Number,
-		min: 0,
-		default: 0
-	}
-});
-PollOptionsSchema.pre('save', function(next) {
-	this.name = this.name.toLowerCase();
-	next();
-});
-var PollSchema = new Schema({
-	  title: String
-	, code:  String
-	, choices: [PollOptionsSchema]
-	, author: { type: Schema.ObjectId, ref: 'User' }
-});
-PollSchema.pre('save', function(next) {
-	this.code = this.code.toLowerCase();
-	next();
-});
+var schema = require('./schema.js');
 
-var VoteSchema = new Schema({
-	  author: { type: Schema.ObjectId, ref: 'User' }
-	, poll:   { type: Schema.ObjectId, ref: 'Poll' }
-});
-
-var UserSchema = new Schema({
-	  resetToken: String
-	, resetExpiration: Date
-	, emailConfirmationToken: { type: String, default: uuid.v1() }
-	, activated: { type: Boolean, default: false }
-	, lastUpdated: Date
-	, created: Date
-	, lastIPaddress: String
-	
-	//, polls: { type: [PollSchema], ref: 'Poll' }
-});
-UserSchema.plugin(mongooseAuth, {
-	everymodule: {
-		everyauth: {
-			User: function () {
-				return User;
-			}
-		}
-	}
-	
-	, password: {
-		  loginWith: 'email'
-		, everyauth: {
-			getLoginPath: '/login'
-			, postLoginPath: '/login'
-			, loginView: 'login.jade'
-			, getRegisterPath: '/register'
-			, postRegisterPath: '/register'
-			, registerView: 'register.jade'
-			, loginSuccessRedirect: '/'
-			, registerSuccessRedirect: '/'
-		}
-	}
-});
-UserSchema.pre('save', function(next) {
-	this.created = new Date();
-	this.lastUpdated = this.created;
-	next();
-});
-
-
-
-var PollOptions = mongoose.model('PollOptions', PollOptionsSchema);
-var Poll = mongoose.model('Poll', PollSchema);
-var User = mongoose.model('User', UserSchema);
-var Vote = mongoose.model('Vote', VoteSchema);
+var PollOptions = schema.PollOptions,
+	Poll = schema.Poll,
+	User = schema.User,
+	Vote = schema.Vote;
 
 
 // App setup
