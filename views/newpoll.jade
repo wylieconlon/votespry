@@ -4,10 +4,10 @@ append head
 h2 Create poll
 
 form(action='/new', method='post')
-	input(type='text', name='title', placeholder='Title')
+	input(type='text', name='title', placeholder='Give it a title')
 	#choices
-		input(type='text', name='choices[0]')
-		input(type='text', name='choices[1]')
+		input(type='text', name='choices[0]', placeholder='Option')
+		input(type='text', name='choices[1]', placeholder='Option')
 	a#addChoice(href='#') + Add option
 	div
 
