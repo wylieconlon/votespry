@@ -136,8 +136,6 @@ app.get('/', function(req, res) {
 					res.render('dashboard', { polls: doc });
 				});
 	} else {
-
-		
 		res.render('home');
 	}
 });
@@ -192,16 +190,6 @@ app.post('/new', function(req, res) {
 	newPoll.save();
 
 	res.redirect('/polls');
-});
-
-app.get('/polls', function(req, res) {
-	if(! req.loggedIn) {
-		res.redirect('/login');
-	}
-	
-	var polls = Poll.find({ 'author': req.user._id }, function(err, doc) {
-					res.render('listpolls', { polls: doc });
-				});
 });
 
 app.get('/poll/:code', function(req, res) {
