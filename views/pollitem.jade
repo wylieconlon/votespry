@@ -2,33 +2,33 @@ append head
 	script(src='/js/highcharts.js')
 	script(src='/js/pollitem.js')
 
-h2 #{poll.title}
+h2= poll.title
 
-- if (typeof poll !== 'undefined')
+- if (poll.open === true)
 	codeCaps = poll.code.toUpperCase()
-
+	
 	p To vote on this poll, text 
 		code#voteCode= codeCaps
 		|  plus your choice to #{number}
-
-	.fb-like(data-send='false', data-width='300', data-show-faces='true')
-
-	a.twitter-share-button(href="https://twitter.com/share") Tweet
-
-	#chart(data-code='#{poll.code}')
-
-	#fb-root
-
-	script
-		(function(d, s, id) {
-		var js, fjs = d.getElementsByTagName(s)[0];
-		if (d.getElementById(id)) return;
-		js = d.createElement(s); js.id = id;
-		js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=102668579866726";
-		fjs.parentNode.insertBefore(js, fjs);
-		}(document, 'script', 'facebook-jssdk'));
-
-	script
-		!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");
 - else
-	p That poll does not exist
+	p You cannot vote on this poll anymore, as it is closed.
+
+.fb-like(data-send='false', data-width='300', data-show-faces='true')
+
+a.twitter-share-button(href="https://twitter.com/share") Tweet
+
+#chart(data-code='#{poll.code}')
+
+#fb-root
+
+script
+	(function(d, s, id) {
+	var js, fjs = d.getElementsByTagName(s)[0];
+	if (d.getElementById(id)) return;
+	js = d.createElement(s); js.id = id;
+	js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=102668579866726";
+	fjs.parentNode.insertBefore(js, fjs);
+	}(document, 'script', 'facebook-jssdk'));
+
+script
+	!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");

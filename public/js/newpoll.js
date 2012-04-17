@@ -1,5 +1,5 @@
 $(function() {
-	var choices = 2;
+	var choices = $('#choices input').length;
 
 	function addField() {
 		var nextIndex = $('#choices input').length;

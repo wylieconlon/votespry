@@ -3,13 +3,26 @@ border-radius(n)
 	   -moz-border-radius n
 	        border-radius n
 
-box-shadow(n)
-	-webkit-box-shadow 0 1px n rgba(0,0,0,.2)
+box-shadow()
+	-webkit-box-shadow arguments 
+	   -moz-box-shadow arguments
+	        box-shadow arguments
 
 box-sizing(s)
 	-webkit-box-sizing s
 	   -moz-box-sizing s
 	        box-sizing s
+
+vertGradient(startColor=#f8f8f8, endColor=#ddd) {
+    background-color: mix(startColor, endColor, 60%);
+    background-image: -moz-linear-gradient(top, startColor, endColor); // FF 3.6+
+    background-image: -ms-linear-gradient(top, startColor, endColor); // IE10
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(startColor), to(endColor)); // Safari 4+, Chrome 2+
+    background-image: -webkit-linear-gradient(top, startColor, endColor); // Safari 5.1+, Chrome 10+
+    background-image: -o-linear-gradient(top, startColor, endColor); // Opera 11.10
+    background-image: linear-gradient(top, startColor, endColor); // The standard
+    background-repeat: repeat-x;
+}
 
 blue = #08c
 
@@ -48,13 +61,19 @@ nav a
 	display inline
 	margin-left 20px
 
+p
+	margin 0
+	margin-bottom 1em
+p:last-child
+	margin-bottom 0
+
 #content
 	background white
 	border 1px solid #ccc
 	padding 20px
 
 	border-radius 5px
-	box-shadow 5px
+	box-shadow 0 1px 5px rgba(0,0,0, .2)
 	clear both
 
 #chart
@@ -65,33 +84,62 @@ nav a
 .clear
 	clear both
 
-.btn, input[type="submit"]
-	-webkit-appearance none
-
-	display inline-block
-	padding 20px
-	border-radius 10px
-
-	font-size 1.5em
-	background blue
-	color white
-	
-	&:hover
-		cursor pointer
-		background darken(blue, 15%)
 input
 	display block
 	padding 10px
-	margin-bottom 20px
+	margin-bottom 10px
 	width 100%
 
 	box-sizing border-box
 
 input[type="text"], input[type="email"], input[type="password"]
+	border 1px solid #ccc
+	border-radius 3px
+	box-shadow inset 0 1px 2px rgba(0,0,0, .2)
 	font-size 1.5em
 
 input[type="submit"]
 	border 0
+
+.btn, input[type="submit"]
+	-webkit-appearance none
+
+	display inline-block
+	padding 10px
+	border-radius 10px
+
+	font-size 1em
+
+	background blue
+	color white
+	vertGradient(blue, darken(blue, 15%))
+
+	text-shadow 0 1px 2px rgba(0,0,0, .2)
+
+	text-decoration none
+	
+	&:hover
+		cursor pointer
+		background darken(blue, 15%)
+		vertGradient(darken(blue, 15%), darken(blue, 30%))
+		text-decoration none
+.btn.large, input[type="submit"].large
+	padding 20px
+	font-size 1.5em
+
+.btn.danger, input[type="submit"].danger
+	vertGradient(#da4f49, #bd362f)
+
+.btn.inactive, input[type="submit"][disabled]
+	background #ccc
+
+#newPoll
+	font-size 1em
+	text-align center
+
+#headerNew
+	border-radius 5px
+	padding 5px
 
 #poll-list
 	padding 0
@@ -107,3 +155,35 @@ input[type="submit"]
 #voteCode
 	font-size 1.5em
 	font-weight bold
+
+#pollTitle input
+	margin-bottom 30px
+
+#choices input
+	font-size 1em
+	padding 5px
+	margin-bottom 10px
+
+#addChoice
+	display inline-block
+	
+	vertGradient(#999, #666)
+	color white
+	
+	border-radius 3px
+	padding 5px
+	margin-bottom 20px
+
+.emailOptional p
+	margin-bottom 5px
+
+#errors
+	color #fff
+	vertGradient(#da4f49, #bd362f)
+
+	border-radius 5px
+	padding 10px
+	padding-left 30px
+
+input.error
+	border-color #bd362f

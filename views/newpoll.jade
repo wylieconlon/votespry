@@ -4,14 +4,41 @@ append head
 h2 Create poll
 
 form(action='/new', method='post')
-	input(type='text', name='title', placeholder='Give it a title')
-	#choices
-		input(type='text', name='choices[0]', placeholder='Option')
-		input(type='text', name='choices[1]', placeholder='Option')
-	a#addChoice(href='#') + Add option
-	div
+	- if (typeof errors !== "undefined")
+		ul#errors
+			each error in errors
+				li= error.msg
 
-	input(type='text', name='code', placeholder='Use a custom voting code')
+	#pollTitle
+		- if (typeof title !== "undefined")
+			- if (typeof errors.title !== "undefined")
+				input.error(type='text', name='title', value='#{title}', placeholder='Give it a title')
+			- else
+				input(type='text', name='title', value='#{title}', placeholder='Give it a title')
+		- else	
+			input(type='text', name='title', placeholder='Give it a title', autofocus='autofocus')
+	
+	#choices
+		- if (typeof choices !== "undefined")
+			each choice, i in choices
+				input(type='text', name='choices[#{i}]', value='#{choice}', placeholder='Option')
+		- else
+			input(type='text', name='choices[0]', placeholder='Option')
+			input(type='text', name='choices[1]', placeholder='Option')
+			input(type='text', name='choices[2]', placeholder='Option')
+			input(type='text', name='choices[3]', placeholder='Option')
+	a#addChoice(href='#') Add option
+
+	.emailOptional
+		p If you enter your email, you'll get the administration link for your poll:
+
+		- if (typeof email !== "undefined")
+			- if (errors.email)
+				input.error(type='email', name='email', value='#{email}', placeholder='Email address (optional)')
+			- else
+				input(type='email', name='email', value='#{email}', placeholder='Email address (optional)')
+		- else
+			input(type='email', name='email', placeholder='Email address (optional)')
 	
 	div
-	input(type='submit', value='Create')
+	input.large#createButton(type='submit', value='Create')

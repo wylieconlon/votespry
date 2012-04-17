@@ -1,8 +1,7 @@
 var mongoose = require('mongoose'),
 	Schema = mongoose.Schema,
-	mongooseAuth = require('mongoose-auth'),
-	everyauth = require('everyauth'),
-	uuid = require('node-uuid');
+	uuid = require('node-uuid'),
+	moment = require('moment');
 
 var PollOptionsSchema = new Schema({
 	name: String,
@@ -21,12 +20,21 @@ var PollSchema = new Schema({
 	  title: String
 	, code:  String
 	, choices: [PollOptionsSchema]
-	, author: { type: Schema.ObjectId, ref: 'User' }
+	//, author: { type: Schema.ObjectId, ref: 'User' }
 	, open: { type: Boolean, default: true }
 	, authCode: { type: String, default: uuid.v1 }
+	, expiration: Date
 });
 PollSchema.pre('save', function(next) {
-	this.code = this.code.toLowerCase();
+	var code = this.code;
+
+	code.toLowerCase();
+	code.replace(/\s*/g, '');
+
+	this.code = code;
+	
+	this.expiration = moment().add('days', 7);
+
 	next();
 });
 
@@ -43,35 +51,13 @@ var UserSchema = new Schema({
 	, lastUpdated: Date
 	, created: Date
 	, lastIPaddress: String
-	
-	//, polls: { type: [PollSchema], ref: 'Poll' }
-});
-UserSchema.plugin(mongooseAuth, {
-	everymodule: {
-		everyauth: {
-			User: function () {
-				return User;
-			}
-		}
-	}
-	
-	, password: {
-		  loginWith: 'email'
-		, everyauth: {
-			getLoginPath: '/login'
-			, postLoginPath: '/login'
-			, loginView: 'login.jade'
-			, getRegisterPath: '/register'
-			, postRegisterPath: '/register'
-			, registerView: 'register.jade'
-			, loginSuccessRedirect: '/'
-			, registerSuccessRedirect: '/'
-		}
-	}
+
+	, phone: String
 });
 UserSchema.pre('save', function(next) {
 	this.created = new Date();
 	this.lastUpdated = this.created;
+
 	next();
 });
 

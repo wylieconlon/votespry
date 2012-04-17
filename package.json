@@ -6,10 +6,11 @@
 		, "jade": "*"
 		, "request": "*"
 		, "mongoose": "*"
-		, "mongoose-auth": "*"
 		, "stylus": "*"
 		, "node-uuid": "*"
 		, "bcrypt": "*"
-		, "everyauth": "*"
+		, "mailer": "*"
+		, "express-validator": "*"
+		, "moment": "*"
 	}
 }

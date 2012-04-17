@@ -1,0 +1,43 @@
+append head
+	script(src='/js/polladmin.js')
+
+h2
+	a(href='/poll/#{code}/')
+		= title
+		|  &rarr;
+
+- if (typeof errors !== "undefined")
+	ul#errors
+		each error in errors
+			li= error.msg
+
+form(method='post')
+	label(for='title') Update your poll's title:
+	- if (typeof errors !== "undefined" && typeof errors.title !== "undefined")
+		input.error#title(type='text', name='title', value='#{title}')
+	- else
+		input#title(type='text', name='title', value='#{title}')
+
+	input(type='submit', value='Update title')
+
+p
+
+form(method='post')
+	label(for='code') Customize the code users will type when voting:
+	input#code(type='text', name='code', value='#{code}')
+
+	input(type='submit', value='Update voting code')
+
+p
+
+form#closePoll(method='post')
+	input(type='hidden', name='close', value='1')
+
+	- if (open === true)
+		input.danger(type='submit', value='Permanently close this poll')
+	- else
+		input(type='submit', value='Poll is closed', disabled='true')
+
+p
+
+a(href='/poll/#{code}/') &larr; Back to poll

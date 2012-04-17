@@ -5,25 +5,21 @@ var settings = require('./settings'),
 	uuid    = require('node-uuid'),
 	bcrypt  = require('bcrypt'),
 	mongoose = require('mongoose'),
-	Schema = mongoose.Schema,
-	mongooseAuth = require('mongoose-auth'),
-	everyauth = require('everyauth'),
-	querystring = require('querystring');
+	email = require('mailer'),
+	expressValidator = require('express-validator');
 
 var	TWILIO_SMS_PATH = settings.twilio.root + '/SMS/Messages.json';
 
-var sms_to = '+13017411101';
-
 var app = module.exports = express.createServer();
 
-var dict = require('./nouns.js');
+var dict = require('./nouns');
 console.log(dict.length);
 
 // Database configuration
 
 mongoose.connect(settings.dbHost+'/'+settings.dbName);
 
-var schema = require('./schema.js');
+var schema = require('./schema');
 
 var PollOptions = schema.PollOptions,
 	Poll = schema.Poll,
@@ -41,12 +37,13 @@ app.configure(function() {
 		dest: __dirname+'/public'
 	}));
 	app.use(express.static(__dirname + '/public'));
-	app.use('/css', express.static(__dirname + '/public/css'));
 	app.use(express.bodyParser());
 	app.use(express.methodOverride());
 	app.use(express.cookieParser());
 	app.use(express.session({ secret: "vote spry" }));
-	app.use(mongooseAuth.middleware());
+	app.use(expressValidator);
+	//app.use(mongooseAuth.middleware());
+	app.use(app.router);
 });
 
 app.configure('development', function() {
@@ -74,54 +71,89 @@ app.get('/', function(req, res) {
 
 // Creating poll
 app.get('/new', function(req, res) {
-	if(! req.loggedIn) {
-		res.redirect('/login?redirect_to=/new');
-	} else {
-		res.render('newpoll', { title: 'New Poll' });
-	}
+	res.render('newpoll');
 });
 app.post('/new', function(req, res) {
-	if(! req.loggedIn) {
-		res.redirect('/login');
-	}
-	
 	var newPoll = new Poll();
 	
 	newPoll.title = req.body.title;
 
+	req.assert('title', 'Please give your poll a title').notEmpty();
+	
+	req.assert('choices', 'Your poll must have some options').isArray();
+
 	// instantiate each choice individually
 	var choices = req.body.choices;
 	for(var i=0; i<choices.length; i++) {
-		newPoll.choices.push({ name: choices[i] });
+		if(choices[i]) {
+			newPoll.choices.push({ name: choices[i] });
+		}
+	}
+	
+	if(req.body.email) {
+		req.assert('email', 'Invalid email address').isEmail();
 	}
 
-	newPoll.author = req.user._id;
-	
-	if(! req.body.code) {
-		function findUntakenCode() {
-			var rand = Math.floor(Math.random() * dict.length),
-			keyword = dict[rand];
+	var errors = req.validationErrors(true);
+	if(errors){
+		console.log(errors);
 
-			console.log(keyword);
-			/*User.find({ "polls.code": keyword }, function(err, doc) {
-				console.log("Found " + doc.length + " matches");
+		var data = req.body;
+		data.errors = errors;
+
+		console.log("Sending %j", data);
+		
+		res.render('newpoll', data);
+	} else {
+		if(! req.body.code) {
+			function findUntakenCode() {
+				var rand = Math.floor(Math.random() * dict.length),
+				keyword = dict[rand];
+
+				console.log(keyword);
+				/*User.find({ "polls.code": keyword }, function(err, doc) {
+					console.log("Found " + doc.length + " matches");
+					
+					if(doc.length == 0) 
+				});*/
 				
-				if(doc.length == 0) 
-			});*/
-			
-			return keyword;
+				return keyword;
+			}
+
+			newPoll.code = findUntakenCode();
+		} else {
+			newPoll.code = req.body.code;
 		}
 
-		newPoll.code = findUntakenCode();
-	} else {
-		newPoll.code = req.body.code;
+		newPoll.save(function(err, doc) {
+			console.log(doc);
+
+			email.send({
+				host: settings.sendgrid.host,
+
+				from: settings.sendgrid.from,
+				to: req.body.email,
+
+				subject: "Administration link for your VoteSpry poll",
+				template: "email-admin.html",
+				data: {
+					title: doc.title,
+					code: doc.code,
+					authCode: doc.authCode
+				},
+
+				authentication: 'login',
+				username: settings.sendgrid.user,
+				password: settings.sendgrid.password
+			},
+			function(err) {
+				console.log(err);
+			});
+
+
+			res.redirect('/poll/admin/'+doc.authCode+'/');
+		});
 	}
-
-	console.log(newPoll);
-	
-	newPoll.save();
-
-	res.redirect('/polls');
 });
 
 app.get('/poll/:code', function(req, res) {
@@ -137,7 +169,7 @@ app.get('/poll/:code', function(req, res) {
 			} else {
 				console.log("No code");
 
-				res.redirect('/polls');
+				res.redirect('/');
 			}
 		});
 });
@@ -171,79 +203,82 @@ app.get('/poll/:code/data.json', function(req, res) {
 		});	
 });
 
-app.get('/vote/:code/:choice', function(req, res) {
-	//if(! req.loggedIn) res.redirect('/login');
+app.get('/poll/admin/:authCode', function(req, res) {
+	Poll.where('authCode', req.params.authCode)
+		.limit(1)
+		.run(function(err, doc) {
+			if(doc.length == 1) {
+				res.render('polladmin', doc[0]);
+			} else {
+				res.redirect('/');
+			}
+		});
+});
 
-	Poll.where('code', req.params.code)
-		.exists('choices.'+req.params.choice)
+app.post('/poll/admin/:authCode', function(req, res) {
+	Poll.where('authCode', req.params.authCode)
 		.limit(1)
 		.run(function(err, doc) {
 			if(doc.length == 1) {
 				var poll = doc[0];
 				
-				console.log(poll);
+				if(req.body.close) {
+					// request to close current poll
+					
+					Poll.update({ '_id': poll._id },
+								{ open: false },
+								function(err, doc) {
+									poll.open = false;
+									res.render('polladmin', poll);
+								});
+				} else if(req.body.code) {
+					// request to update vote code
+					
+					var code = req.body.code.replace(/\s*/g, '').toLowerCase();
 
-				Vote.where('author', req.user._id)
-					.where('poll', poll._id)
-					.limit(1)
-					.run(function(err, doc) {
-						if(doc.length > 0) {
-							console.log("Invalid vote");
-							
-							res.json({ error: "You have already voted on this poll." });
-						} else {
-							var increment = { '$inc': {} };
-							increment['$inc']['choices.'+req.params.choice+'.votes'] = 1;
-
-							Poll.update({ 'code': req.params.code },
-										increment,
-										function(err, doc) {
-										});
-							
-							var vote = new Vote({
-								author: req.user._id,
-								poll: poll._id
-							});
-							vote.save();
-
-							res.json({ success: "Vote succeeded" });
-						}
-					});
+					// must check if code isn't in use
+					Poll.where('code', code)
+						.limit(1)
+						.run(function(err, doc) {
+							if(!err && doc.length == 0) {
+								Poll.update({ '_id': poll._id},
+											{ 'code': code },
+											function(err, doc) {
+												res.redirect('/poll/admin/'+req.params.authCode+'/');
+											});
+							} else {
+								res.render('polladmin', poll);
+							}
+						});
+				} else if(req.body.title) {
+					// request to update poll title
+					
+					if(req.body.title.length > 0) {
+						Poll.update({ '_id': poll._id },
+									{ title: req.body.title },
+									function(err, doc) {
+										poll.title = req.body.title;
+										res.render('polladmin', poll);
+									});
+					} else {
+						poll.errors = { title: 'Please give your poll a title' };
+						console.log(poll);
+						res.render('polladmin', poll);
+					}
+				} else {
+					res.render('polladmin', poll);
+				}
 			} else {
-				res.json({ error: "No poll with that ID", code: req.params.code });
+				res.redirect('/');
 			}
-		});	
-});
-
-app.get('/send', function(req, res) {
-	var params = {
-		'From': settings.twilio.from,
-		'To': sms_to,
-		'Body': "Test message"
-	};
-	
-	var body = querystring.stringify(params);
-	
-	console.log(body, TWILIO_SMS_PATH);
-	
-	request.post({
-		url: TWILIO_SMS_PATH,
-		form: params
-	}, function(error, response, body) {
-		if(!error) {
-			console.log(response.statusCode, body);
-		} else {
-			console.log(error);
-		}
-	});
-	
-	res.send("Message sent");
+		});
 });
 
 app.post('/SmsResponse', function(req, res) {
 	console.log(req.body);
 	
-	var body = req.body.Body;
+	var from = req.body.From,
+		body = req.body.Body;
 
 	var splitIndex = body.indexOf(' '),
 		code = body.substr(0, splitIndex).toLowerCase(),
@@ -251,36 +286,72 @@ app.post('/SmsResponse', function(req, res) {
 
 	console.log(code, content);
 
-	Poll.where('code', code)
-		.where('choices.name', content)
-		.limit(1)
-		.run(function(err, doc) {
-			var poll = doc[0];
-			
-			var updateIndex = -1;
-			for(var i=0; i<poll.choices.length; i++) {
-				if(poll.choices[i].name == content) {
-					updateIndex = i;
-					break;
+	var voteCallback = function(err, doc) {
+		var user = doc[0];
+
+		Poll.where('code', code)
+			.where('choices.name', content)
+			.limit(1)
+			.run(function(err, doc) {
+				if(doc.length == 1) {
+					var poll = doc[0];
+					
+					if(poll.open === false) {
+						res.sendfile('./smsPollClosed.xml');
+					} else {
+						var votePair = { 'author': user._id, 'poll': poll._id };
+						
+						Vote.count(votePair, function(err, doc) {
+							console.log(err, doc);
+							if(doc !== 0) {
+								// already voted
+								res.sendfile('./smsAlreadyVoted.xml');
+							} else {
+								var updateIndex = -1;
+								for(var i=0; i<poll.choices.length; i++) {
+									if(poll.choices[i].name == content) {
+										updateIndex = i;
+										break;
+									}
+								}
+
+								if(typeof updateIndex !== 'undefined') {
+									var increment = { '$inc': {} };
+										increment['$inc']['choices.'+updateIndex+'.votes'] = 1;
+									Poll.update({ 'code': code },
+												increment,
+												function(err, doc) {
+												});
+
+									var vote = new Vote(votePair);
+									vote.save(function(err, doc) { console.log(doc); });
+
+									res.sendfile('./smsSuccess.xml');
+								} else {
+									res.sendfile('./smsFailure.xml');
+								}
+							}
+						});
+					}
+				} else {
+					res.sendfile('./smsFailure.xml');
 				}
-			}
+			});
+	}
+	
+	User.find({ 'phone': from }, function(err, doc) {
+		if(doc.length == 0) {
+			var user = new User({ 'phone': from });
+			user.save(function(err) {
+				User.find({ 'phone': from }, voteCallback);
+			});
+		} else {
+			var user = doc[0];
+			voteCallback(null, [user]);
+		}
 
-			if(typeof updateIndex !== 'undefined') {
-				var increment = { '$inc': {} };
-					increment['$inc']['choices.'+updateIndex+'.votes'] = 1;
-				Poll.update({ 'code': code },
-							increment,
-							function(err, doc) {
-							});
-
-				res.sendfile('./smsSuccess.xml');
-			} else {
-				res.sendfile('./smsFailure.xml');
-			}
-		});
+	});
 });
-
-mongooseAuth.helpExpress(app);
 
 app.listen(settings.port);
 console.log("Server listening on port %d", settings.port);

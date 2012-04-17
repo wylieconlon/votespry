@@ -8,6 +8,10 @@ $(function() {
 			chart: {
 				renderTo: 'chart',
 				type: 'column',
+				plotBorderWidth: 1,
+				animation: {
+					duration: 100
+				},
 				events: {
 					load: function() {
 						var that = this;
@@ -33,15 +37,19 @@ $(function() {
 			xAxis: {
 				labels: {
 					style: {
-						font: 'normal 16px Arial, Helvetica, sans-serif',
+						fontFamily: 'Arial, Helvetica, sans-serif',
+						fontSize: '16px',
 						color: '#000'
 					}
-				}
+				},
+				lineWidth: 0,
+				//tickLength: 0,
+				tickPosition: 'inside'
 			},
 
 			yAxis: {
 				title: {
-					text: "Votes"
+					text: null
 				},
 				min: 0,
 				allowDecimals: false,
@@ -53,7 +61,7 @@ $(function() {
 			},
 
 			series: [{
-				name: "Test"
+				name: "Votes"
 			}]
 	});
 });

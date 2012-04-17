@@ -35,6 +35,13 @@ nav a {
   display: inline;
   margin-left: 20px;
 }
+p {
+  margin: 0;
+  margin-bottom: 1em;
+}
+p:last-child {
+  margin-bottom: 0;
+}
 #content {
   background: #fff;
   border: 1px solid #ccc;
@@ -43,6 +50,8 @@ nav a {
   -moz-border-radius: 5px;
   border-radius: 5px;
   -webkit-box-shadow: 0 1px 5px rgba(0,0,0,0.20);
+  -moz-box-shadow: 0 1px 5px rgba(0,0,0,0.20);
+  box-shadow: 0 1px 5px rgba(0,0,0,0.20);
   clear: both;
 }
 #chart {
@@ -53,27 +62,10 @@ nav a {
 .clear {
   clear: both;
 }
-.btn,
-input[type="submit"] {
-  -webkit-appearance: none;
-  display: inline-block;
-  padding: 20px;
-  -webkit-border-radius: 10px;
-  -moz-border-radius: 10px;
-  border-radius: 10px;
-  font-size: 1.5em;
-  background: #08c;
-  color: #fff;
-}
-.btn:hover,
-input[type="submit"]:hover {
-  cursor: pointer;
-  background: #0074ad;
-}
 input {
   display: block;
   padding: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   width: 100%;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -82,10 +74,83 @@ input {
 input[type="text"],
 input[type="email"],
 input[type="password"] {
+  border: 1px solid #ccc;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,0.20);
+  -moz-box-shadow: inset 0 1px 2px rgba(0,0,0,0.20);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.20);
   font-size: 1.5em;
 }
 input[type="submit"] {
   border: 0;
+}
+.btn,
+input[type="submit"] {
+  -webkit-appearance: none;
+  display: inline-block;
+  padding: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+  font-size: 1em;
+  background: #08c;
+  color: #fff;
+  background-color: #0080bf;
+  background-image: -moz-linear-gradient(top, #08c, #0074ad);
+  background-image: -ms-linear-gradient(top, #08c, #0074ad);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#08c), to(#0074ad));
+  background-image: -webkit-linear-gradient(top, #08c, #0074ad);
+  background-image: -o-linear-gradient(top, #08c, #0074ad);
+  background-image: linear-gradient(top, #08c, #0074ad);
+  background-repeat: repeat-x;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.20);
+  text-decoration: none;
+}
+.btn:hover,
+input[type="submit"]:hover {
+  cursor: pointer;
+  background: #0074ad;
+  background-color: #006ba1;
+  background-image: -moz-linear-gradient(top, #0074ad, #005f8f);
+  background-image: -ms-linear-gradient(top, #0074ad, #005f8f);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0074ad), to(#005f8f));
+  background-image: -webkit-linear-gradient(top, #0074ad, #005f8f);
+  background-image: -o-linear-gradient(top, #0074ad, #005f8f);
+  background-image: linear-gradient(top, #0074ad, #005f8f);
+  background-repeat: repeat-x;
+  text-decoration: none;
+}
+.btn.large,
+input[type="submit"].large {
+  padding: 20px;
+  font-size: 1.5em;
+}
+.btn.danger,
+input[type="submit"].danger {
+  background-color: #ce453e;
+  background-image: -moz-linear-gradient(top, #da4f49, #bd362f);
+  background-image: -ms-linear-gradient(top, #da4f49, #bd362f);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#da4f49), to(#bd362f));
+  background-image: -webkit-linear-gradient(top, #da4f49, #bd362f);
+  background-image: -o-linear-gradient(top, #da4f49, #bd362f);
+  background-image: linear-gradient(top, #da4f49, #bd362f);
+  background-repeat: repeat-x;
+}
+.btn.inactive,
+input[type="submit"][disabled] {
+  background: #ccc;
+}
+#newPoll {
+  font-size: 1em;
+  text-align: center;
+}
+#headerNew {
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  padding: 5px;
 }
 #poll-list {
   padding: 0;
@@ -101,4 +166,51 @@ input[type="submit"] {
 #voteCode {
   font-size: 1.5em;
   font-weight: bold;
+}
+#pollTitle input {
+  margin-bottom: 30px;
+}
+#choices input {
+  font-size: 1em;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+#addChoice {
+  display: inline-block;
+  background-color: #848484;
+  background-image: -moz-linear-gradient(top, #999, #666);
+  background-image: -ms-linear-gradient(top, #999, #666);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#999), to(#666));
+  background-image: -webkit-linear-gradient(top, #999, #666);
+  background-image: -o-linear-gradient(top, #999, #666);
+  background-image: linear-gradient(top, #999, #666);
+  background-repeat: repeat-x;
+  color: #fff;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  padding: 5px;
+  margin-bottom: 20px;
+}
+.emailOptional p {
+  margin-bottom: 5px;
+}
+#errors {
+  color: #fff;
+  background-color: #ce453e;
+  background-image: -moz-linear-gradient(top, #da4f49, #bd362f);
+  background-image: -ms-linear-gradient(top, #da4f49, #bd362f);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#da4f49), to(#bd362f));
+  background-image: -webkit-linear-gradient(top, #da4f49, #bd362f);
+  background-image: -o-linear-gradient(top, #da4f49, #bd362f);
+  background-image: linear-gradient(top, #da4f49, #bd362f);
+  background-repeat: repeat-x;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  padding: 10px;
+  padding-left: 30px;
+}
+input.error {
+  border-color: #bd362f;
 }

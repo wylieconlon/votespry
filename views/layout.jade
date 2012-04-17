@@ -5,7 +5,7 @@ html
       - if (typeof title !== 'undefined')
         title= title
       - else
-        title Vote Spry
+        title Instant SMS polling with VoteSpry
       
       link(rel='stylesheet', href='/css/style.css')
       script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js')
@@ -16,13 +16,8 @@ html
           a(href='/') VoteSpry
   
         nav
-          - if (everyauth.loggedIn)
-            a(href='/') Dashboard
-            a(href='/logout') Log out
-          - else
-            a(href='/') Home
-            a(href='/login') Sign in
-            a(href='/register') Register
+          a(href='/') Home
+          a.btn#headerNew(href='/new') Create a poll
 
         .clear
 
