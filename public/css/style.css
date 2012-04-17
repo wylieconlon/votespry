@@ -54,6 +54,13 @@ p:last-child {
   box-shadow: 0 1px 5px rgba(0,0,0,0.20);
   clear: both;
 }
+footer {
+  margin-top: 1em;
+}
+footer,
+footer a {
+  color: #666;
+}
 #chart {
   width: 100%;
   height: 400px;
@@ -142,9 +149,24 @@ input[type="submit"].danger {
 input[type="submit"][disabled] {
   background: #ccc;
 }
+#home #sampleGraph {
+  position: relative;
+  float: right;
+  top: -40px;
+}
 #newPoll {
-  font-size: 1em;
+  display: block;
+  width: 300px;
+  margin: 0 auto;
+  margin-top: 20px;
   text-align: center;
+  -webkit-box-shadow: 0 1px 5px rgba(0,0,0,0.20);
+  -moz-box-shadow: 0 1px 5px rgba(0,0,0,0.20);
+  box-shadow: 0 1px 5px rgba(0,0,0,0.20);
+}
+#newPoll h3 {
+  font-size: 1.5em;
+  margin-bottom: 0;
 }
 #headerNew {
   -webkit-border-radius: 5px;
