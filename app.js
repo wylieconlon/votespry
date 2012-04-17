@@ -42,7 +42,6 @@ app.configure(function() {
 	app.use(express.cookieParser());
 	app.use(express.session({ secret: "vote spry" }));
 	app.use(expressValidator);
-	//app.use(mongooseAuth.middleware());
 	app.use(app.router);
 });
 
@@ -129,9 +128,9 @@ app.post('/new', function(req, res) {
 			console.log(doc);
 
 			email.send({
-				host: settings.sendgrid.host,
+				host: settings.email.host,
 
-				from: settings.sendgrid.from,
+				from: settings.email.from,
 				to: req.body.email,
 
 				subject: "Administration link for your VoteSpry poll",
@@ -143,8 +142,8 @@ app.post('/new', function(req, res) {
 				},
 
 				authentication: 'login',
-				username: settings.sendgrid.user,
-				password: settings.sendgrid.password
+				username: settings.email.user,
+				password: settings.email.password
 			},
 			function(err) {
 				console.log(err);

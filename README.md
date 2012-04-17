@@ -8,7 +8,7 @@ lecture is going too fast or too slow.
 
 VoteSpry is a super-simple app that lets anybody vote on a poll via text
 message. It's focused primarily on real-time situations with an audience to
-gather feedback from.
+gather feedback from. It takes 30 seconds to create a poll.
 
 How it works
 ------------
@@ -45,9 +45,17 @@ and urls. Here is a sample settings.js file:
     settings.dbHost = 'mongodb://localhost';
     settings.dbName = 'votespry';
     
-    settings.twilio = {};
+    var email = {};
+    settings.email = email;
     
-    var tw = settings.twilio;
+    email.host = 'smtp.sendgrid.net';
+    email.from = '### YOUR SENDGRID EMAIL';
+    
+    email.user = '### YOUR SENDGRID USER';
+    email.password = '### YOUR SENDGRID PASSWORD:';
+    
+    var tw = {};
+    settings.twilio = tw;
     
     tw.sid  = '### YOUR TWILIO SID';
     tw.auth = '### YOUR TWILIO AUTH TOKEN';
@@ -67,7 +75,11 @@ and urls. Here is a sample settings.js file:
     tw.root = tw.protocol + tw.sid + ':' + tw.auth + '@' + tw.host + tw.path;
     
     module.exports = settings;
-    
+
+### Note about sending email
+
+You can use any SMTP server for this, such as [Sendgrid](http://sengrid.com).
+
 ### Note about Twilio
 
 This project is tricky to test locally because Twilio must have a web-accessible
@@ -75,3 +87,16 @@ URL for its incoming SMS callbacks. That's why there's an alternate way to vote
 by sending an HTTP `GET` to the `/vote/:code/:choiceIndex` route (note: only one
 vote per user is enforced). One possibility is to use a proxy service to forward
 requests at a remote service to your machine.
+
+
+Running the app
+---------------
+
+VoteSpry runs on port 80, which requires root privileges to bind to. To run it
+locally, you can use the [node-dev](https://github.com/fgnass/node-dev) server:
+
+    sudo node-dev app.js
+
+On a production server, you must specify the NODE\_ENV environment variable:
+
+    sudo NODE_ENV=production /usr/local/bin/node app.js
