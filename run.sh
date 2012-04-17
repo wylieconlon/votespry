@@ -1,2 +1,1 @@
-export NODE_ENV=production
-sudo forever start app.js
+sudo NODE_ENV=production /usr/local/bin/node app.js > log.txt &
