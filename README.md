@@ -83,11 +83,9 @@ You can use any SMTP server for this, such as [Sendgrid](http://sengrid.com).
 ### Note about Twilio
 
 This project is tricky to test locally because Twilio must have a web-accessible
-URL for its incoming SMS callbacks. That's why there's an alternate way to vote
-by sending an HTTP `GET` to the `/vote/:code/:choiceIndex` route (note: only one
-vote per user is enforced). One possibility is to use a proxy service to forward
-requests at a remote service to your machine.
-
+URL for its incoming SMS callbacks. However, to simulate voting behavior you
+can send fake Twilio [post parameters](http://www.twilio.com/docs/api/rest/sms)
+to the `/SmsResponse` route using `curl`.
 
 Running the app
 ---------------
