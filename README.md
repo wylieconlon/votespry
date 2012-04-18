@@ -10,6 +10,8 @@ VoteSpry is a super-simple app that lets anybody vote on a poll via text
 message. It's focused primarily on real-time situations with an audience to
 gather feedback from. It takes 30 seconds to create a poll.
 
+[Read about the process behind building the app.](http://hci.wylie.su/2012/04/13/real_time-voting/)
+
 How it works
 ------------
 
