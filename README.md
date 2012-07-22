@@ -17,9 +17,7 @@ How it works
 
 VoteSpry is a node.js app that provides a simple web interface for creating and
 monitoring polls, using [Twilio](http://twilio.com) to handle incoming SMS
-votes. Registration with email and password is temporarily required to create
-and come back to polls, but this will be replaced soon with an email-based
-system.
+votes.
 
 Install instructions
 --------------------
